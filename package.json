@@ -1,0 +1,41 @@
+{
+    "private": true,
+    "scripts": {
+        "dev": "npm run development",
+        "development": "cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+        "watch": "npm run development -- --watch",
+        "watch-poll": "npm run watch -- --watch-poll",
+        "hot": "cross-env NODE_ENV=development node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
+        "prod": "npm run production",
+        "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
+    },
+    "devDependencies": {
+        "axios": "^0.19",
+        "bootstrap": "^4.5.0",
+        "cross-env": "^5.1",
+        "jquery": "^3.2",
+        "laravel-mix": "^5.0.1",
+        "lodash": "^4.17.13",
+        "popper.js": "^1.12",
+        "resolve-url-loader": "^2.3.1",
+        "sass": "^1.20.1",
+        "sass-loader": "7.*",
+        "vue": "^2.6.11",
+        "vue-template-compiler": "^2.6.11"
+    },
+    "dependencies": {
+        "@coreui/icons": "^1.0.1",
+        "@fortawesome/fontawesome-free": "^5.12.1",
+        "blueimp-file-upload": "^10.8.0",
+        "bootstrap-sass": "^3.4.1",
+        "bootstrap-scss": "^4.4.1",
+        "bootstrap-vue": "^2.15.0",
+        "datatables.net": "^1.10.21",
+        "datatables.net-bs4": "^1.10.21",
+        "datatables.net-buttons": "^1.6.2",
+        "datatables.net-buttons-bs4": "^1.6.2",
+        "moment": "^2.24.0",
+        "vue-badger-accordion": "^1.1.6",
+        "vue-bootstrap-datetimepicker": "^5.0.1"
+    }
+}
