@@ -34,6 +34,8 @@ class ParserFactory
             return new Roseltorg($url);
         } elseif (strpos($url, 'zakazrf.ru') !== false) {
             return new ZakazRf($url);
+        } elseif (strpos($url, 'b2b-center.ru') !== false) {
+            return new B2b($url);
         } else {
             return new Ea44Parser($url);
         }
