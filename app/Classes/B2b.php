@@ -31,6 +31,11 @@ class B2b extends BaseParser
         $isEis = $html->find('div[id=reg_num_edit]', 0);
 
         if (!empty($isEis)) {
+            if (strlen($isEis) < 13) {
+                // Кидаем на парсер 223-ФЗ
+            } else {
+                // Кидаем на парсер 44-ФЗ
+            }
 
         } else {
 
