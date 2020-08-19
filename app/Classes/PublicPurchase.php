@@ -11,6 +11,20 @@ class PublicPurchase extends BaseParser
     public function parse(simple_html_dom $html)
     {
 
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
+
         $auction['is223fz'] = 1;
 
         $blocks = $html->find('.noticeTabBox.padBtm20 tr');
@@ -69,7 +83,7 @@ class PublicPurchase extends BaseParser
                         $auction['etpId'] = 2;
                     } elseif (trim($noSpanContentText) === 'РТС-тендер') {
                         $auction['etpId'] = 3;
-                    } elseif (trim($noSpanContentText) === 'ЗАКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО «СБЕРБАНК - АВТОМАТИЗИРОВАННАЯ СИСТЕМА ТОРГОВ»') {
+                    } elseif (trim($noSpanContentText) === 'АКЦИОНЕРНОЕ ОБЩЕСТВО «СБЕРБАНК-АВТОМАТИЗИРОВАННАЯ СИСТЕМА ТОРГОВ»') {
                         $auction['etpId'] = 4;
                     } elseif (trim(htmlspecialchars_decode($noSpanContentText)) === 'ЭТП "OTC.ru"') {
                         $auction['etpId'] = 5;

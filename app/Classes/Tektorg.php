@@ -11,19 +11,19 @@ class Tektorg extends BaseParser
     public function parse(simple_html_dom $html)
     {
 
-//        $auction = [
-//            'auctionNumber' => '',
-//            'isPriceRequest' => '',
-//            'is223fz' => '',
-//            'deadline' => '',
-//            'auctionDate' => '',
-//            'etpId' => '',
-//            'client' => '',
-//            'auctionObject' => '',
-//            'auctionStatus' => '',
-//            'auctionStatusName' => '',
-//            'maxPrice' => '',
-//        ];
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
 
         $auctionObject = $html->find('.procedure__item-name', 0);
         $auction['auctionObject'] = $auctionObject->innertext;

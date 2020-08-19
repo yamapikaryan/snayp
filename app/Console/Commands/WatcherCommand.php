@@ -3,15 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Auction;
-use App\Classes\BaseParser;
 use App\Classes\ParserFactory;
-use App\Classes\StatusParser;
-use App\Classes\Ea44Parser;
-use GuzzleHttp\Client;
-use http\Exception\BadHeaderException;
+use App\User;
 use Illuminate\Console\Command;
-use PHPMailer\PHPMailer\PHPMailer;
-use Psy\Exception\RuntimeException;
 use Illuminate\Support\Facades\Log;
 use Mailgun\Mailgun;
 
@@ -63,20 +57,19 @@ class WatcherCommand extends Command
             exit(0);
         }
 
+        $users = User::get()->keyBy('id');
+
         \Log::info('step 3');
 
         $mailChanges = [
             'cancelled' => [],
             'completed' => [],
+            'tomorrow' => [],
             'delayed' => [],
         ];
 
-
         $currentDate = isset($_GET['date']) ? $_GET['date'] : date('d.m.Y');
         $tomorrowDate = date('d.m.Y', strtotime($currentDate . ' +1 day'));
-
-
-
 
 
         \Log::info('Auctions: ' . $auctions->count());
@@ -98,22 +91,46 @@ class WatcherCommand extends Command
 
             // Проверка аукциона на статусы
             if (($auction->auction_status_id !== $freshData['auction']['auctionStatus'])) {
+                $currentKey = '';
+                $currentFormattedString = $currentString = '<li>' . $auction->auction_link . '</il>' . "\n";
+
                 switch ($freshData['auction']['auctionStatus']) {
                     case 5:
                     case 7:
                         echo 'Внимание! Закупка #' . $auction->auction_number . ' отменена.' . "\n";
-                        $mailChanges['cancelled'][] = $auction;
+                        $currentKey = 'cancelled';
                         break;
+
                     case 4:
                     case 6:
                         echo 'Закупка #' . $auction->auction_number . ' завершена.' . "\n";
-                        $mailChanges['completed'][] = "Аукцион: " . $auction->auction_link . "<br>" . "Победитель: " . $freshData['auction']['winner'] . "<br>" . "Цена: " . $freshData['auction']['winnerPrice'];
+                        $currentFormattedString = "Аукцион: " . $auction->auction_link . "<br>"
+                            . "Победитель: " . $freshData['auction']['winner']
+                            . "<br>" . "Цена: " . $freshData['auction']['winnerPrice'];
+                        $currentKey = 'completed';
+
                         break;
                     case 3:
                         echo 'Для закупки #' . $auction->auction_number . ' идет работа комиссии.' . "\n";
                         break;
                 }
 
+                $mailChanges[$currentKey][] =
+                    [
+                        'auction' => $auction,
+                        'data' => [
+                            'formattedString' => $currentFormattedString,
+                        ],
+                        'updatedFields' => [
+                            'auction_status_id' => $freshData['auction']['auctionStatus'],
+                            'auction_winner' => $freshData['auction']['winner'],
+                            'winner_price' => $freshData['auction']['winnerPrice'],
+
+
+                        ]
+                    ];
+
+                unset($currentKey);
             }
 
             \Log::info('step 5');
@@ -155,21 +172,44 @@ class WatcherCommand extends Command
             }
 
 
-
             if (($deadlineDb !== $deadlineNew) || ($dateDb !== $dateNew)) {
                 echo 'Дата окончания подачи заявок для закупки #' . $auction->auction_number . ' изменена.' . "\n" . 'Старая дата — ' . $deadlineDb . "\n" . 'Новая дата - ' . $deadlineNew . "\n";
                 echo 'Дата проведения торгов закупки #' . $auction->auction_number . ' изменена.' . "\n" . 'Старая дата — ' . $dateDb . "\n" . 'Новая дата - ' . $dateNew . "\n";
-                $mailChanges['delayed'][] = "Аукцион: " . $auction->auction_link . "<br>" . "Старая дата подачи: " . $deadlineDb . ". Новая дата подачи: " . $deadlineNew . "<br>" . "Старая дата торгов: " . $dateDb . ". Новая дата торгов: " . $dateNew;
-            }
 
+                $currentObject = [
+                    'auction' => $auction,
+                    'data' => [
+                        'formattedString' => "Аукцион: " . $auction->auction_link . "<br>"
+                            . "Старая дата подачи: " . $deadlineDb . ". Новая дата подачи: "
+                            . $deadlineNew . "<br>" . "Старая дата торгов: " . $dateDb . "
+                            . Новая дата торгов: " . $dateNew,
+                    ],
+                    'updatedFields' => []
+                ];
+
+                if ($deadlineDb !== $deadlineNew) {
+                    $currentObject['updatedFields']['applicationdeadline'] = $deadlineNew;
+                }
+
+                if ($dateDb !== $dateNew) {
+                    $currentObject['updatedFields']['auctiondate'] = $dateNew;
+                }
+
+                $mailChanges['delayed'][] = $currentObject;
+                unset($currentObject);
+            }
 
 
             if ($tomorrowDate == $dateDb) {
-                echo 'Завтра — ' .$tomorrowDate . ' — проводится закупка #' . $auction->auction_number . "\n";
-                $mailChanges['tomorrow'][] = "Аукцион: " . $auction->auction_link  . " играется: " . $dateDb;
+                echo 'Завтра — ' . $tomorrowDate . ' — проводится закупка #' . $auction->auction_number . "\n";
+                $mailChanges['tomorrow'][] =
+                    [
+                        'auction' => $auction,
+                        'data' => [
+                            'formattedString' => "Аукцион: " . $auction->auction_link . " играется: " . $dateDb,
+                        ]
+                    ];
             }
-
-
 
         }
 
@@ -179,145 +219,139 @@ class WatcherCommand extends Command
 
         \Log::info('step 9, data: ' . json_encode($mailChanges));
 
-        if (!empty($mailChanges['cancelled'])) {
-            $currentTitle =  '<h3>Отменены следующие аукционы:</h3><ul>';
-            $adminMailBody = $currentTitle;
 
-            $users = User::whereIn('id', array_keys($mailBodies))->get()->keyBy('id');
-            foreach($mailBodies as $userId => $userMailParts){
+        $adminMailBody = '';
+
+        foreach (array_keys($mailChanges) as $k) {
+            if (empty($mailChanges[$k])) {
+                continue;
             }
 
-            foreach ($mailChanges['cancelled'] as $auction) {
-                $currentString = '<li>' . $auction->auction_link . '</il>' . "\n";
+            switch ($k) {
+                case 'delayed':
+                    $currentTitle = '<h3>Перенесены следующие аукционы:</h3><ul>';
+                    break;
+
+                case 'cancelled':
+                    $currentTitle = '<h3>Отменены следующие аукционы:</h3><ul>';
+                    break;
+
+                case 'completed':
+                    $currentTitle = '<h3>Завершены следующие аукционы:</h3><ul>';
+                    break;
+
+                case 'tomorrow':
+                    $currentTitle = '<h3>Tomorrow следующие аукционы:</h3><ul>';
+                    break;
+
+                default:
+                    $currentTitle = '<h3>Информация по следующим аукционам:</h3><ul>';
+            }
+
+            $adminMailBody .= $currentTitle;
+
+            $t = 0;
+            foreach ($mailChanges[$k] as $auctionObject) {
+                $currentString = '<li>' . $auctionObject['data']['formattedString'] . '</il>' . "\n";
 
                 // для админа
                 $adminMailBody .= $currentString;
 
                 // если для этого пользователя ещё не было ни одной части письма, то инициализируем
-                if(empty($mailBodies[$auction->user_id])){
-                    $mailBodies[$auction->user_id] = [];
+                if (!isset($mailBodies[$auction->user_id])) {
+                    $mailBodies[$auctionObject['auction']->user_id] = '';
                 }
 
-                // если для этого пользователя ещё не было ни одного отменённого ауукциона, то вставляем заголовок об отменённых аукционах
-                if(empty($mailBodies[$auction->user_id]['cancelled'])){
-                    $mailBodies[$auction->user_id]['cancelled'] = $currentTitle;
+                if ($t === 0) {
+                    $mailBodies[$auctionObject['auction']->user_id] .= $currentTitle;
                 }
 
-                $mailBodies[$auction->user_id]['cancelled'] .= $currentString;
+                $mailBodies[$auctionObject['auction']->user_id] .= $currentString;
+
+                $t++;
             }
 
             $adminMailBody .= '</ul>';
-
-            $emailParams = [
-                'from' => 'snayp.ru <admin@mail.snayp.ru>',
-                'to' => 'Kalinin Rostislav <isatcod@gmail.com>',
-                'subject' => 'Отмененные аукционы',
-                'html' => $adminMailBody,
-            ];
-
-//            dd($mailBodies);
-
-            # Make the call to the client.
-            $result = $mgClient->messages()->send($domain, $emailParams);
-
-            \Log::info('Mailgun message created, cancelled: ' . (string)$result->getId());
-
-            if (empty($result)) {
-                echo 'Не удалось отправить!' . $adminMailBody . "\n";
-                Log::error('Не удалось отправить письмо следующего содержания' . "\n" . $adminMailBody);
-            }
-
-            unset($adminMailBody);
         }
 
-        if (!empty($mailChanges['completed'])) {
-            $adminMailBody = '<h3>Завершены следующие аукционы:</h3><ul>';
-
-            foreach ($mailChanges['completed'] as $completedAuction) {
-                $adminMailBody .= '<li>' . $completedAuction . '</il>' . "\n";
-            }
-
-            $adminMailBody .= '</ul>';
-
-            $emailParams = [
-                'from' => 'snayp.ru <admin@mail.snayp.ru>',
-                'to' => 'Kalinin Rostislav <isatcod@gmail.com>',
-                'subject' => 'Завершенные аукционы',
-                'html' => $adminMailBody,
-            ];
-
-            # Make the call to the client.
-            $result = $mgClient->messages()->send($domain, $emailParams);
-
-            \Log::info('Mailgun message created, completed: ' . (string)$result->getId());
-
-            if (empty($result)) {
-                echo 'Не удалось отправить!' . $adminMailBody . "\n";
-                Log::error('Не удалось отправить письмо следующего содержания' . "\n" . $adminMailBody);
-            }
-
-            unset($adminMailBody);
+        if(empty($adminMailBody)){
+            echo 'Нечего отправлять, выходим' . "\n";
+            return 1;
         }
 
-        if (!empty($mailChanges['delayed'])) {
-            $adminMailBody = '<h3>Перенесены следующие аукционы:</h3><ul>';
+        // тела писем админу и пользователям построены, можно начинать
 
-            foreach ($mailChanges['delayed'] as $delayedAuction) {
-                $adminMailBody .= '<li>' . $delayedAuction . '</il>' . "\n";
+        $emailParams = [
+            'from' => 'snayp.ru <admin@mail.snayp.ru>',
+            'to' => 'Kalinin Rostislav <isatcod@gmail.com>',
+            'subject' => 'Информация по аукционам за ' . date('d.m.Y'),
+            'html' => $adminMailBody,
+        ];
+
+        # Make the call to the client.
+        $result = $mgClient->messages()->send($domain, $emailParams);
+
+        \Log::info('Mailgun message created, cancelled: ' . (string)$result->getId());
+
+        if (empty($result)) {
+            echo 'Не удалось отправить!' . $adminMailBody . "\n";
+            Log::error('Не удалось отправить письмо следующего содержания' . "\n" . $adminMailBody);
+        }
+
+        foreach ($mailBodies as $userId => $mailBody) {
+
+            if (empty($users[$userId])) {
+                \Log::warning('Не удалось найти пользователя с ID # ' . $userId);
+                continue;
             }
 
-            $adminMailBody .= '</ul>';
+            if(empty($mailBody)){
+                \Log::warning('Не удалось найти тело письма');
+                continue;
+            }
 
             $emailParams = [
                 'from' => 'snayp.ru <admin@mail.snayp.ru>',
-                'to' => 'Kalinin Rostislav <isatcod@gmail.com>',
-                'subject' => 'Перенесенные аукционы',
-                'html' => $adminMailBody,
+                'subject' => 'Информация по аукционам за ' . date('d.m.Y'),
+//                'to' => '<isatcod+user@gmail.com>',
+                'to' => '<' . $users[$userId]->email . '>',
+                'html' => $mailBody,
             ];
 
             # Make the call to the client.
             $result = $mgClient->messages()->send($domain, $emailParams);
 
-            \Log::info('Mailgun message created: ' . (string)$result->getId());
+            \Log::info('Mailgun message created, ' . $k . ': ' . (string)$result->getId());
 
             if (empty($result)) {
-                echo 'Не удалось отправить!' . $adminMailBody . "\n";
-                Log::error('Не удалось отправить письмо следующего содержания' . "\n" . $adminMailBody);
+                echo 'Не удалось отправить!' . $mailBody . "\n";
+                Log::error('Не удалось отправить письмо следующего содержания' . "\n" . $mailBody);
+                continue;
             }
 
-            unset($adminMailBody);
         }
 
+        // всё хорошо, выполняем дела после отправки письма
+        foreach (array_keys($mailChanges) as $k) {
+            foreach ($mailChanges[$k] as $auctionObject) {
+                $isAuctionUpdated = false;
 
-        if (!empty($mailChanges['tomorrow'])) {
-            $adminMailBody = '<h3>Завтра играются следующие аукционы:</h3><ul>';
+                if (empty($auctionObject['updatedFields'])) {
+                    continue;
+                }
 
-            foreach ($mailChanges['tomorrow'] as $tomorrowAuction) {
-                $adminMailBody .= '<li>' . $tomorrowAuction . '</il>' . "\n";
+                foreach ($auctionObject['updatedFields'] as $key => $value) {
+                    $auctionObject['auction']->{$key} = $value;
+                    echo 'Обновили ' . $key . ' на ' . $value . ' для аукциона ' . $auctionObject['auction']->auction_number . "\n";
+                    $isAuctionUpdated = true;
+                }
+
+
+                if ($isAuctionUpdated) {
+                    $auctionObject['auction']->save();
+                }
             }
-
-            $adminMailBody .= '</ul>';
-
-            $emailParams = [
-                'from' => 'snayp.ru <admin@mail.snayp.ru>',
-                'to' => 'Kalinin Rostislav <isatcod@gmail.com>',
-                'subject' => 'Аукционы на завтра',
-                'html' => $adminMailBody,
-            ];
-
-            # Make the call to the client.
-            $result = $mgClient->messages()->send($domain, $emailParams);
-
-            \Log::info('Mailgun message created: ' . (string)$result->getId());
-
-            if (empty($result)) {
-                echo 'Не удалось отправить!' . $adminMailBody . "\n";
-                Log::error('Не удалось отправить письмо следующего содержания' . "\n" . $adminMailBody);
-            }
-
-            unset($adminMailBody);
         }
-
 
     }
 }

@@ -68,7 +68,7 @@
 <body>
 <div id="app">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Снайп</a>
+        <a class="navbar-brand" href="/">Снайп</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -101,10 +101,10 @@
                     <a class="nav-link" href="/auctions/create">Создать заявку</a>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Номер аукциона" aria-label="search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Поиск</button>
-            </form>
+{{--            <form class="form-inline my-2 my-lg-0">--}}
+{{--                <input class="form-control mr-sm-2" type="search" placeholder="Номер аукциона" aria-label="search">--}}
+{{--                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Поиск</button>--}}
+{{--            </form>--}}
             <?php } ?>
 
             <ul class="navbar-nav ml-auto">

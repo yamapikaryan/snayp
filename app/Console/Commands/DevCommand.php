@@ -43,7 +43,7 @@ class DevCommand extends Command
      */
     public function handle()
     {
-        $url = 'https://www.b2b-center.ru/market/postavka-zatvorov-dlia-nuzhd-samarskoi-tets/tender-2429836/';
+        $url = 'https://utp.sberbank-ast.ru/RussianPost/NBT/PurchaseView/8/0/0/633581';
 
         ParserFactory::getParser($url)->get();
 

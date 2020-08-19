@@ -10,6 +10,20 @@ class Roseltorg extends BaseParser
 {
     public function parse(simple_html_dom $html)
     {
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
+
         preg_match('/procedure\/(\d+)/i', $this->url, $tmp);
         $eisNum = $tmp[1];
         if (strlen($eisNum) > 13) {
@@ -24,7 +38,6 @@ class Roseltorg extends BaseParser
         }
 
         $auction = ParserFactory::getParser($eisLink)->get();
-        dd($auction);
 
 
         return $auction;

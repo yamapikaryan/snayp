@@ -282,6 +282,7 @@
                         '_token': $('meta[name="csrf-token"]').attr('content')
                     },
                     success(response) {
+
                         $('#auction_link').val(auctionLink);
                         $('#auction_number').val(response.auction.auctionNumber);
                         $('#etp_id').val(response.auction.etpId);

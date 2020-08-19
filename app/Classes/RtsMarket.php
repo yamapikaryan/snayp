@@ -15,19 +15,19 @@ class RtsMarket extends BaseParser
         // Проверяем аукцион или запрос
         preg_match('/rts-tender\.ru\/(.+)\//iU', $this->url, $localPlace);
 
-        //        $auction = [
-//            'auctionNumber' => '',
-//            'isPriceRequest' => '',
-//            'is223fz' => '',
-//            'deadline' => '',
-//            'auctionDate' => '',
-//            'etpId' => '',
-//            'client' => '',
-//            'auctionObject' => '',
-//            'auctionStatus' => '',
-//            'auctionStatusName' => '',
-//            'maxPrice' => '',
-//        ];
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
 
         if ($localPlace[1] === 'zapros') {
 

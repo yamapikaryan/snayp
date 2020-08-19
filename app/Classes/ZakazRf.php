@@ -10,6 +10,20 @@ class ZakazRf extends BaseParser
 {
     public function parse(simple_html_dom $html)
     {
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
+
         if (str_contains($this->url, '223etp')) {
             // 223-фз
             $blocks = $html->find('.details-table tr');

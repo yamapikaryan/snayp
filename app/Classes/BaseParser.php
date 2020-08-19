@@ -57,6 +57,7 @@ abstract class BaseParser
             try {
                 $response = $this->getClient()->get($this->url);
                 $this->html = html_entity_decode((string)$response->getBody());
+//                file_put_contents(storage_path('page.htm'), $this->html);
 
 //                dd($this->html);
 

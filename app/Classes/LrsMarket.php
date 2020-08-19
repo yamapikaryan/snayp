@@ -12,6 +12,20 @@ class LrsMarket extends BaseParser
     {
         //подготавливаем номер аукциона
 
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
+
         $auction['isPriceRequest'] = 1;
         $auction['is223fz'] = 1;
         $auction['etpId'] = 6;

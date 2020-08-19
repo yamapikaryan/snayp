@@ -12,6 +12,20 @@ class OtcMarket extends BaseParser
 {
     public function parse(simple_html_dom $html)
     {
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
+
         preg_match('/tender\/(\d+)/i', $this->url, $tmp);
 
         $baseUrl = 'https://otc.ru/microservices-otc/order/api/order/GetTender';

@@ -11,19 +11,19 @@ class B2b extends BaseParser
     public function parse(simple_html_dom $html)
     {
 
-//        $auction = [
-//            'auctionNumber' => '',
-//            'isPriceRequest' => '',
-//            'is223fz' => '',
-//            'deadline' => '',
-//            'auctionDate' => '',
-//            'etpId' => '',
-//            'client' => '',
-//            'auctionObject' => '',
-//            'auctionStatus' => '',
-//            'auctionStatusName' => '',
-//            'maxPrice' => '',
-//        ];
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
 
         // Проверяем на присутствие в ЕИС
 

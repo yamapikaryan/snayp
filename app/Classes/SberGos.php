@@ -11,6 +11,20 @@ class SberGos extends BaseParser
     public function parse(simple_html_dom $html)
     {
 
+        $auction = [
+            'auctionNumber' => '',
+            'isPriceRequest' => '',
+            'is223fz' => '',
+            'deadline' => '',
+            'auctionDate' => '',
+            'etpId' => '',
+            'client' => '',
+            'auctionObject' => '',
+            'auctionStatus' => '',
+            'auctionStatusName' => '',
+            'maxPrice' => '',
+        ];
+
 
         preg_match('/<linkhref>(.+)<\/linkhref>/', $html, $tmp);
 
